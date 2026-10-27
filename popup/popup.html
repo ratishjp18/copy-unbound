@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=320">
+  <title>CopyUnbound</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+          <path d="M9 14l2 2 4-4"/>
+        </svg>
+        <span class="logo-text">CopyUnbound</span>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Website Info -->
+      <div class="website-info">
+        <span class="website-label">Current Website</span>
+        <span class="website-hostname" id="hostname">Loading...</span>
+      </div>
+      
+      <!-- Restricted Message -->
+      <div class="restricted" id="restricted">
+        <svg class="restricted-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <p>CopyUnbound cannot run on this page due to browser restrictions.</p>
+      </div>
+      
+      <!-- Toggle Section -->
+      <div class="toggle-section" id="toggle-section">
+        <div class="toggle-row">
+          <span class="toggle-label">Copy Protection Override</span>
+          <label class="toggle">
+            <input type="checkbox" id="toggle">
+            <span class="toggle-slider">
+              <span class="toggle-off">OFF</span>
+              <span class="toggle-on">ON</span>
+            </span>
+          </label>
+        </div>
+        
+        <!-- Status -->
+        <div class="status" id="status">
+          <div class="status-dot"></div>
+          <span class="status-text" id="status-text">Disabled</span>
+        </div>
+        
+        <!-- Features (shown when enabled) -->
+        <div class="features" id="features">
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Text Selection</span>
+          </div>
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Right Click</span>
+          </div>
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Copy/Paste Shortcuts</span>
+          </div>
+          <div class="feature">
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Password Field Paste</span>
+          </div>
+        </div>
+        
+        <!-- Actions when enabled -->
+        <div class="actions" id="actions">
+          <button class="btn btn-secondary" id="copy-text-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Copy Visible Text
+          </button>
+        </div>
+      </div>
+      
+      <!-- Tools Section - Always visible -->
+      <div class="tools-section" id="tools-section">
+        <div class="section-divider">
+          <span>Tools</span>
+        </div>
+        
+        <!-- Password Copy Tool -->
+        <button class="btn btn-secondary btn-full" id="copy-password-btn">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Copy Password from Field
+        </button>
+        <p class="tool-hint">Click, then click on any password field to copy its value</p>
+        
+        <!-- OCR Tool -->
+        <button class="btn btn-primary btn-full" id="ocr-btn" style="margin-top: 8px;">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          Extract Text from Image (OCR)
+        </button>
+        <p class="tool-hint">Select any area on the page to extract text from images</p>
+      </div>
+      
+      <!-- Text Preview Modal -->
+      <div class="modal" id="text-modal">
+        <div class="modal-header">
+          <span class="modal-title">Extracted Text</span>
+          <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <textarea class="text-preview" id="text-preview" readonly></textarea>
+        </div>
+        <div class="modal-footer">
+          <span class="char-count" id="char-count">0 characters</span>
+          <button class="btn btn-primary" id="copy-confirm-btn">Copy to Clipboard</button>
+        </div>
+      </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Unlock text selection and copying on restricted websites.</p>
+    </footer>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

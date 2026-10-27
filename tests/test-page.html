@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CopyUnbound Test Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      padding: 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .test-section {
+      background: white;
+      padding: 24px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h2 {
+      color: #4a90d9;
+      margin-bottom: 12px;
+      font-size: 18px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e8e8e8;
+    }
+    
+    p {
+      color: #444;
+      margin-bottom: 10px;
+    }
+    
+    .description {
+      font-size: 13px;
+      color: #888;
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+    
+    /* Test 1: CSS Protected Text */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      background: #fff3cd;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #ffc107;
+    }
+    
+    /* Test 2: Multiple CSS methods */
+    .multi-protected {
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+      background: #f8d7da;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #dc3545;
+    }
+    
+    /* Test for normal text */
+    .normal-text {
+      background: #d4edda;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #28a745;
+    }
+    
+    /* Form styles */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #4a90d9;
+      box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+    }
+    
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    /* Contenteditable */
+    .editable {
+      padding: 12px;
+      border: 2px dashed #4a90d9;
+      border-radius: 4px;
+      min-height: 80px;
+      background: #f0f7ff;
+    }
+    
+    /* Dynamic content area */
+    #dynamic-content {
+      min-height: 60px;
+      background: #e9ecef;
+      padding: 12px;
+      border-radius: 4px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background: #4a90d9;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      background: #357abd;
+    }
+    
+    /* Canvas */
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    /* Test image */
+    .test-image {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    /* Status indicator */
+    .status {
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: inline-block;
+    }
+    
+    .status.blocked {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .status.allowed {
+      background: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔓 CopyUnbound Test Page</h1>
+  <p class="subtitle">Use this page to test the extension's copy unlocking features</p>
+  
+  <!-- Test 1: Normal Text -->
+  <div class="test-section">
+    <h2>✅ Test 1: Normal Selectable Text</h2>
+    <p class="description">This text should always be selectable (baseline test)</p>
+    <div class="normal-text">
+      <p>This is normal, selectable text. You should be able to select and copy this without any issues. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </div>
+  </div>
+  
+  <!-- Test 2: CSS Protected Text -->
+  <div class="test-section">
+    <h2>🔒 Test 2: CSS Protected Text (user-select: none)</h2>
+    <p class="description">This text has CSS protection. Enable CopyUnbound to select it.</p>
+    <div class="no-select">
+      <p>This text is protected with CSS user-select: none. When CopyUnbound is enabled, you should be able to select and copy this text. The extension overrides the CSS restriction.</p>
+    </div>
+  </div>
+  
+  <!-- Test 3: Multi-layer CSS Protection -->
+  <div class="test-section">
+    <h2>🔒 Test 3: Multi-layer CSS Protection</h2>
+    <p class="description">This text has multiple CSS protections including pointer-events: none</p>
+    <div class="multi-protected">
+      <p>This text has multiple CSS protections applied: user-select: none AND pointer-events: none. CopyUnbound should restore both.</p>
+    </div>
+  </div>
+  
+  <!-- Test 4: JavaScript Right-Click Block -->
+  <div class="test-section">
+    <h2>🔒 Test 4: JavaScript Right-Click Block</h2>
+    <p class="description">Right-click is blocked by JavaScript on this text</p>
+    <div id="no-rightclick" style="background: #fff3cd; padding: 12px; border-radius: 4px; border: 1px solid #ffc107;">
+      <p>Right-click on this text to test. Without the extension, you'll see an alert. With CopyUnbound enabled, the browser's context menu should appear.</p>
+    </div>
+  </div>
+  
+  <!-- Test 5: JavaScript Copy Block -->
+  <div class="test-section">
+    <h2>🔒 Test 5: JavaScript Copy Event Block</h2>
+    <p class="description">Ctrl+C / Cmd+C is blocked by JavaScript</p>
+    <div id="no-copy" style="background: #f8d7da; padding: 12px; border-radius: 4px; border: 1px solid #dc3545;">
+      <p>Select this text and try Ctrl+C (or Cmd+C on Mac). Without the extension, copying is blocked. With CopyUnbound enabled, copy should work.</p>
+    </div>
+  </div>
+  
+  <!-- Test 6: Inline Event Handlers -->
+  <div class="test-section">
+    <h2>🔒 Test 6: Inline Event Handlers</h2>
+    <p class="description">This element has inline oncontextmenu and onselectstart handlers</p>
+    <div oncontextmenu="alert('Right-click blocked by inline handler!'); return false;" 
+         onselectstart="return false;" 
+         oncopy="alert('Copy blocked!'); return false;"
+         style="background: #e2e3e5; padding: 12px; border-radius: 4px; border: 1px solid #6c757d;">
+      <p>This text has inline event handlers that block right-click, selection, and copy. CopyUnbound should remove these handlers.</p>
+    </div>
+  </div>
+  
+  <!-- Test 7: Password Field -->
+  <div class="test-section">
+    <h2>🔑 Test 7: Password Field Paste</h2>
+    <p class="description">Test paste functionality in password fields</p>
+    <div class="form-group">
+      <label for="test-password">Password Input (paste blocked by JS):</label>
+      <input type="password" id="test-password" placeholder="Try pasting a password here" onpaste="alert('Paste blocked!'); return false;">
+    </div>
+    <div class="form-group">
+      <label for="normal-password">Normal Password Input:</label>
+      <input type="password" id="normal-password" placeholder="This should always allow paste">
+    </div>
+  </div>
+  
+  <!-- Test 8: Regular Form Fields -->
+  <div class="test-section">
+    <h2>📝 Test 8: Form Fields</h2>
+    <p class="description">These should work normally regardless of extension state</p>
+    <div class="form-group">
+      <label for="text-input">Text Input:</label>
+      <input type="text" id="text-input" placeholder="Type or paste here">
+    </div>
+    <div class="form-group">
+      <label for="textarea">Textarea:</label>
+      <textarea id="textarea" rows="3" placeholder="Type or paste multiline text here"></textarea>
+    </div>
+  </div>
+  
+  <!-- Test 9: Contenteditable -->
+  <div class="test-section">
+    <h2>✏️ Test 9: Contenteditable Element</h2>
+    <p class="description">This editable div should retain normal behavior</p>
+    <div class="editable" contenteditable="true">
+      Click here to edit this text. You can type, select, copy, and paste within this contenteditable area.
+    </div>
+  </div>
+  
+  <!-- Test 10: Table Data -->
+  <div class="test-section">
+    <h2>📊 Test 10: Table Selection</h2>
+    <p class="description">Tables with selection disabled</p>
+    <table style="user-select: none; -webkit-user-select: none;">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>John Doe</td>
+          <td>john@example.com</td>
+          <td>Active</td>
+        </tr>
+        <tr>
+          <td>Jane Smith</td>
+          <td>jane@example.com</td>
+          <td>Pending</td>
+        </tr>
+        <tr>
+          <td>Bob Wilson</td>
+          <td>bob@example.com</td>
+          <td>Inactive</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Test 11: Dynamic Content -->
+  <div class="test-section">
+    <h2>⚡ Test 11: Dynamic Content</h2>
+    <p class="description">Content added dynamically after page load</p>
+    <button onclick="addDynamicContent()">Add Protected Content</button>
+    <div id="dynamic-content">
+      <p style="color: #888;">Click the button to add dynamically protected content.</p>
+    </div>
+  </div>
+  
+  <!-- Test 12: Canvas Text -->
+  <div class="test-section">
+    <h2>🎨 Test 12: Canvas Rendered Text</h2>
+    <p class="description">Text rendered in canvas (note: cannot be selected, use "Copy Visible Text" feature)</p>
+    <canvas id="text-canvas" width="400" height="100"></canvas>
+  </div>
+  
+  <!-- Test 13: Image with Text -->
+  <div class="test-section">
+    <h2>🖼️ Test 13: Sample Image</h2>
+    <p class="description">An image containing text (for OCR testing if implemented)</p>
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center; border-radius: 4px; color: white;">
+      <h3 style="color: white; margin-bottom: 10px;">Sample Text in Image Area</h3>
+      <p style="color: rgba(255,255,255,0.9);">This simulates text that might appear in an image</p>
+    </div>
+  </div>
+  
+  <script>
+    // Test 4: Right-click block
+    document.getElementById('no-rightclick').addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      alert('Right-click blocked by JavaScript addEventListener!');
+      return false;
+    });
+    
+    // Test 5: Copy block
+    document.getElementById('no-copy').addEventListener('copy', function(e) {
+      e.preventDefault();
+      alert('Copy blocked by JavaScript!');
+      return false;
+    });
+    
+    // Also block selectstart
+    document.getElementById('no-copy').addEventListener('selectstart', function(e) {
+      e.preventDefault();
+      return false;
+    });
+    
+    // Test 11: Dynamic content
+    function addDynamicContent() {
+      const container = document.getElementById('dynamic-content');
+      const newDiv = document.createElement('div');
+      newDiv.style.cssText = 'user-select: none; -webkit-user-select: none; background: #fff3cd; padding: 12px; border-radius: 4px; margin-top: 10px;';
+      newDiv.setAttribute('oncontextmenu', 'return false;');
+      newDiv.setAttribute('oncopy', 'return false;');
+      newDiv.innerHTML = '<p><strong>Dynamically Added Protected Text</strong></p><p>This content was added after page load with CSS and inline event protections. CopyUnbound should handle it via MutationObserver.</p>';
+      container.appendChild(newDiv);
+    }
+    
+    // Test 12: Canvas text
+    const canvas = document.getElementById('text-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, 400, 100);
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('Text rendered on Canvas', 20, 40);
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText('This text cannot be selected directly', 20, 70);
+  </script>
+</body>
+</html>

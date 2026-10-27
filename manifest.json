@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "CopyUnbound",
+  "version": "1.0.2",
+  "description": "Unlock text selection, right-click, and copying on websites that restrict them. Includes OCR for image text.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "clipboardWrite",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/disabled-16.png",
+      "32": "icons/disabled-32.png",
+      "48": "icons/disabled-48.png",
+      "128": "icons/disabled-128.png"
+    },
+    "default_title": "CopyUnbound"
+  },
+  "icons": {
+    "16": "icons/disabled-16.png",
+    "48": "icons/disabled-48.png",
+    "128": "icons/disabled-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "css": ["content/unlock.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
