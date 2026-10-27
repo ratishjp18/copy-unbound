@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CopyUnbound Icon Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .icon-item {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+    .download-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #4a90d9;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .download-btn:hover {
+      background: #357abd;
+    }
+    .instructions {
+      background: #fff3cd;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid #ffc107;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 CopyUnbound Icon Generator</h1>
+  
+  <div class="instructions">
+    <h3>Instructions:</h3>
+    <ol>
+      <li>Right-click on each icon below</li>
+      <li>Select "Save image as..."</li>
+      <li>Save to the <code>icons/</code> folder with the filename shown</li>
+      <li>Repeat for all icons</li>
+    </ol>
+  </div>
+  
+  <div class="icon-grid" id="icons"></div>
+  
+  <script>
+    const sizes = [16, 32, 48, 128];
+    const states = [
+      { name: 'enabled', color: '#27ae60', bgColor: '#d4edda' },
+      { name: 'disabled', color: '#e67e22', bgColor: '#fff3cd' },
+      { name: 'restricted', color: '#6c757d', bgColor: '#e9ecef' }
+    ];
+    
+    const container = document.getElementById('icons');
+    
+    states.forEach(state => {
+      sizes.forEach(size => {
+        const item = document.createElement('div');
+        item.className = 'icon-item';
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        // Background circle
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size/2 - 1, 0, Math.PI * 2);
+        ctx.fillStyle = state.bgColor;
+        ctx.fill();
+        
+        // Border
+        ctx.strokeStyle = state.color;
+        ctx.lineWidth = Math.max(1, size / 16);
+        ctx.stroke();
+        
+        // Clipboard icon
+        const scale = size / 24;
+        ctx.save();
+        ctx.translate(size * 0.15, size * 0.1);
+        ctx.scale(scale * 0.7, scale * 0.7);
+        
+        // Clipboard body
+        ctx.strokeStyle = state.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(4, 6, 16, 16, 2);
+        ctx.stroke();
+        
+        // Clipboard clip
+        ctx.beginPath();
+        ctx.roundRect(8, 2, 8, 4, 1);
+        ctx.stroke();
+        
+        // Checkmark (for enabled) or X (for disabled/restricted)
+        ctx.lineWidth = 2.5;
+        if (state.name === 'enabled') {
+          ctx.beginPath();
+          ctx.moveTo(8, 14);
+          ctx.lineTo(11, 17);
+          ctx.lineTo(16, 11);
+          ctx.stroke();
+        } else if (state.name === 'disabled') {
+          ctx.beginPath();
+          ctx.moveTo(9, 11);
+          ctx.lineTo(15, 17);
+          ctx.moveTo(15, 11);
+          ctx.lineTo(9, 17);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(12, 10);
+          ctx.lineTo(12, 14);
+          ctx.moveTo(12, 17);
+          ctx.lineTo(12.01, 17);
+          ctx.stroke();
+        }
+        
+        ctx.restore();
+        
+        const filename = `${state.name}-${size}.png`;
+        
+        item.innerHTML = `
+          <p><strong>${filename}</strong></p>
+        `;
+        item.insertBefore(canvas, item.firstChild);
+        
+        const link = document.createElement('a');
+        link.className = 'download-btn';
+        link.textContent = 'Download';
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        item.appendChild(link);
+        
+        container.appendChild(item);
+      });
+    });
+  </script>
+</body>
+</html>
