@@ -264,14 +264,14 @@ body {
   display: flex;
 }
 
-/* OCR Section - Always visible */
-.ocr-section {
+/* Tools Section - Always visible */
+.tools-section {
   padding-top: 12px;
   border-top: 1px solid #e8e8e8;
   margin-top: 4px;
 }
 
-.ocr-section.hidden {
+.tools-section.hidden {
   display: none;
 }
 
@@ -289,10 +289,10 @@ body {
   font-weight: 500;
 }
 
-.ocr-hint {
+.tool-hint {
   font-size: 11px;
   color: #888;
-  margin-top: 8px;
+  margin-top: 6px;
   text-align: center;
 }
 

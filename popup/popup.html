@@ -99,12 +99,24 @@
         </div>
       </div>
       
-      <!-- OCR Section - Always visible -->
-      <div class="ocr-section" id="ocr-section">
+      <!-- Tools Section - Always visible -->
+      <div class="tools-section" id="tools-section">
         <div class="section-divider">
-          <span>Image Text Extraction</span>
+          <span>Tools</span>
         </div>
-        <button class="btn btn-primary btn-full" id="ocr-btn">
+        
+        <!-- Password Copy Tool -->
+        <button class="btn btn-secondary btn-full" id="copy-password-btn">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Copy Password from Field
+        </button>
+        <p class="tool-hint">Click, then click on any password field to copy its value</p>
+        
+        <!-- OCR Tool -->
+        <button class="btn btn-primary btn-full" id="ocr-btn" style="margin-top: 8px;">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
             <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -112,7 +124,7 @@
           </svg>
           Extract Text from Image (OCR)
         </button>
-        <p class="ocr-hint">Select any area on the page to extract text from images</p>
+        <p class="tool-hint">Select any area on the page to extract text from images</p>
       </div>
       
       <!-- Text Preview Modal -->

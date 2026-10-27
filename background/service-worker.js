@@ -251,6 +251,161 @@ async function handleMessage(message, sender) {
         }
       }
       
+      case 'CU_START_PASSWORD_COPY': {
+        // Start password copy mode
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        
+        if (!tabs.length) {
+          return { success: false, error: 'No active tab' };
+        }
+        
+        try {
+          // Inject and execute password copy function directly
+          const results = await chrome.scripting.executeScript({
+            target: { tabId: tabs[0].id },
+            func: () => {
+              // Find ALL inputs that might contain passwords
+              const allInputs = document.querySelectorAll('input');
+              let passwordValue = null;
+              let foundField = null;
+              
+              // Debug info
+              let debugInfo = [];
+              
+              for (const input of allInputs) {
+                const type = input.type || 'text';
+                const hasValue = input.value && input.value.length > 0;
+                const placeholder = input.placeholder || '';
+                const name = input.name || '';
+                const id = input.id || '';
+                
+                debugInfo.push({
+                  type,
+                  hasValue,
+                  valueLength: input.value?.length || 0,
+                  name,
+                  id,
+                  placeholder: placeholder.substring(0, 20)
+                });
+                
+                // Check password type fields first
+                if (type === 'password' && hasValue) {
+                  passwordValue = input.value;
+                  foundField = 'password';
+                  break;
+                }
+              }
+              
+              // If no password field found, look for any input with dots/bullets in its visible value
+              if (!passwordValue) {
+                for (const input of allInputs) {
+                  if (input.value && input.value.length > 0) {
+                    // Check if it looks like a password field by name/id
+                    const lowerName = (input.name || '').toLowerCase();
+                    const lowerId = (input.id || '').toLowerCase();
+                    if (lowerName.includes('pass') || lowerId.includes('pass') || 
+                        lowerName.includes('pwd') || lowerId.includes('pwd') ||
+                        lowerName.includes('secret') || lowerId.includes('secret')) {
+                      passwordValue = input.value;
+                      foundField = 'named-password';
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              // Still nothing? Try to trigger focus on password fields to get autofill value
+              if (!passwordValue) {
+                const pwdFields = document.querySelectorAll('input[type="password"]');
+                for (const pwd of pwdFields) {
+                  // Dispatch focus event
+                  pwd.focus();
+                  pwd.dispatchEvent(new Event('focus', { bubbles: true }));
+                  pwd.dispatchEvent(new Event('input', { bubbles: true }));
+                  
+                  // Check value again
+                  if (pwd.value && pwd.value.length > 0) {
+                    passwordValue = pwd.value;
+                    foundField = 'autofill-triggered';
+                    break;
+                  }
+                }
+              }
+              
+              if (!passwordValue) {
+                // Return debug info to help troubleshoot
+                return { 
+                  success: false, 
+                  error: 'No password value found. Fields found: ' + JSON.stringify(debugInfo.slice(0, 5))
+                };
+              }
+              
+              // Copy to clipboard using multiple methods
+              let copied = false;
+              
+              // Method 1: Clipboard API
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                  // Create a temporary focused element
+                  const btn = document.createElement('button');
+                  btn.style.cssText = 'position:fixed;left:-9999px;';
+                  document.body.appendChild(btn);
+                  btn.focus();
+                  
+                  navigator.clipboard.writeText(passwordValue).then(() => {
+                    copied = true;
+                  }).catch(() => {});
+                  
+                  document.body.removeChild(btn);
+                } catch (e) {}
+              }
+              
+              // Method 2: execCommand (fallback)
+              if (!copied) {
+                const textarea = document.createElement('textarea');
+                textarea.value = passwordValue;
+                textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
+                textarea.setAttribute('readonly', '');
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                textarea.setSelectionRange(0, passwordValue.length);
+                
+                try {
+                  copied = document.execCommand('copy');
+                } catch (e) {}
+                
+                document.body.removeChild(textarea);
+              }
+              
+              // Show result message
+              const msg = document.createElement('div');
+              msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (copied ? '#27ae60' : '#dc3545') + ';color:white;padding:14px 28px;border-radius:8px;font-family:system-ui,-apple-system,sans-serif;font-size:15px;font-weight:500;z-index:2147483647;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+              msg.textContent = copied 
+                ? '✓ Password copied! (' + passwordValue.length + ' characters)' 
+                : '✗ Copy failed - try Ctrl+C manually';
+              document.body.appendChild(msg);
+              setTimeout(() => msg.remove(), 4000);
+              
+              return { 
+                success: copied, 
+                length: passwordValue.length,
+                foundField,
+                error: copied ? null : 'Copy command failed'
+              };
+            }
+          });
+          
+          if (results && results[0] && results[0].result) {
+            return results[0].result;
+          }
+          
+          return { success: false, error: 'Script execution failed' };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      }
+      
       case 'CU_CAPTURE_OCR': {
         // Capture screen and perform OCR
         try {

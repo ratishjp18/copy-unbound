@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusTextEl = document.getElementById('status-text');
   const featuresEl = document.getElementById('features');
   const actionsEl = document.getElementById('actions');
-  const ocrSectionEl = document.getElementById('ocr-section');
+  const toolsSectionEl = document.getElementById('tools-section');
   const copyTextBtn = document.getElementById('copy-text-btn');
   const textModal = document.getElementById('text-modal');
   const textPreview = document.getElementById('text-preview');
@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (restricted) {
       restrictedEl.classList.add('show');
       toggleSectionEl.classList.add('hidden');
-      ocrSectionEl.classList.add('hidden');
+      toolsSectionEl.classList.add('hidden');
       return;
     }
     
     restrictedEl.classList.remove('show');
     toggleSectionEl.classList.remove('hidden');
-    ocrSectionEl.classList.remove('hidden');
+    toolsSectionEl.classList.remove('hidden');
     
     toggleEl.checked = enabled;
     
@@ -173,6 +173,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
+  // Copy Password button handler
+  const copyPasswordBtn = document.getElementById('copy-password-btn');
+  
+  copyPasswordBtn.addEventListener('click', async () => {
+    copyPasswordBtn.disabled = true;
+    copyPasswordBtn.innerHTML = `
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      Copying...
+    `;
+    
+    try {
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: 'CU_START_PASSWORD_COPY' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      
+      if (result && result.success) {
+        copyPasswordBtn.innerHTML = `
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Copied! (${result.length} chars)
+        `;
+        copyPasswordBtn.style.background = '#27ae60';
+        copyPasswordBtn.style.color = 'white';
+        
+        setTimeout(() => {
+          window.close();
+        }, 1500);
+      } else {
+        alert(result?.error || 'Could not copy password. Make sure the password field has a value.');
+        resetPasswordButton();
+      }
+    } catch (e) {
+      alert('Error: ' + e.message);
+      resetPasswordButton();
+    }
+  });
+  
+  function resetPasswordButton() {
+    copyPasswordBtn.disabled = false;
+    copyPasswordBtn.innerHTML = `
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      Copy Password from Field
+    `;
+  }
+
   // OCR button handler
   ocrBtn.addEventListener('click', async () => {
     ocrBtn.disabled = true;
