@@ -231,6 +231,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
+  // Copy Table button handler
+  const copyTableBtn = document.getElementById('copy-table-btn');
+  
+  copyTableBtn.addEventListener('click', async () => {
+    copyTableBtn.disabled = true;
+    copyTableBtn.innerHTML = `
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="3" y1="15" x2="21" y2="15"/>
+        <line x1="9" y1="3" x2="9" y2="21"/>
+        <line x1="15" y1="3" x2="15" y2="21"/>
+      </svg>
+      Extracting...
+    `;
+    
+    try {
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: 'CU_COPY_TABLE' }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      
+      if (result && result.success) {
+        copyTableBtn.innerHTML = `
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Copied! (${result.rows} rows)
+        `;
+        copyTableBtn.style.background = '#27ae60';
+        copyTableBtn.style.color = 'white';
+        
+        setTimeout(() => {
+          resetTableButton();
+        }, 2000);
+      } else {
+        alert(result?.error || 'No table data found on this page.');
+        resetTableButton();
+      }
+    } catch (e) {
+      alert('Error: ' + e.message);
+      resetTableButton();
+    }
+  });
+  
+  function resetTableButton() {
+    copyTableBtn.disabled = false;
+    copyTableBtn.style.background = '';
+    copyTableBtn.style.color = '';
+    copyTableBtn.innerHTML = `
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="3" y1="15" x2="21" y2="15"/>
+        <line x1="9" y1="3" x2="9" y2="21"/>
+        <line x1="15" y1="3" x2="15" y2="21"/>
+      </svg>
+      Copy Table Data
+    `;
+  }
+
   // OCR button handler
   ocrBtn.addEventListener('click', async () => {
     ocrBtn.disabled = true;

@@ -1,275 +1,149 @@
 /**
  * CopyUnbound - Content Script
- * Unlocks text selection, right-click, copy/paste functionality
+ * Unlocks text selection and copy functionality
  * 
- * IMPORTANT: This script should UNBLOCK copying, not interfere with it.
- * We use stopImmediatePropagation to prevent site blockers, but we
- * must NOT preventDefault on copy/paste events.
+ * MINIMAL INTERVENTION: Only act when copy is actually blocked
  */
 
 (function() {
   'use strict';
   
-  // Prevent multiple injections
   if (window.__copyUnboundInitialized) return;
   window.__copyUnboundInitialized = true;
   
-  // State
   let isEnabled = false;
   let observer = null;
-  const removedHandlers = new WeakMap();
   
-  /**
-   * Handler for events that sites commonly block
-   * We stop propagation to prevent site handlers from canceling,
-   * but we do NOT preventDefault - we want the browser's default behavior
-   */
-  function unblockHandler(event) {
-    if (!isEnabled) return;
-    
-    // Stop the event from reaching site's blocking handlers
-    // but allow the browser's default action to proceed
-    event.stopImmediatePropagation();
-    
-    // Explicitly do NOT call preventDefault()
-    // The browser should handle copy/paste/select normally
-  }
+  // Code editors - never interfere
+  const CODE_EDITOR_SELECTORS = ['.monaco-editor', '.CodeMirror', '.ace_editor', '.cm-editor'];
   
-  /**
-   * Handler specifically for contextmenu (right-click)
-   */
-  function contextMenuHandler(event) {
-    if (!isEnabled) return;
-    
-    // Stop site handlers from blocking the context menu
-    event.stopImmediatePropagation();
-    // Don't preventDefault - let the browser show the menu
-  }
-  
-  /**
-   * Handler for keyboard shortcuts
-   */
-  function keyboardHandler(event) {
-    if (!isEnabled) return;
-    
-    const isCtrlOrCmd = event.ctrlKey || event.metaKey;
-    const key = event.key?.toLowerCase();
-    
-    // Only intercept copy/paste/cut/select-all shortcuts
-    if (isCtrlOrCmd && ['c', 'v', 'a', 'x'].includes(key)) {
-      // Stop site handlers from blocking these shortcuts
-      event.stopImmediatePropagation();
-      // Don't preventDefault - let browser handle the actual copy/paste
+  function isInsideCodeEditor(element) {
+    if (!element) return false;
+    for (const selector of CODE_EDITOR_SELECTORS) {
+      if (element.closest?.(selector)) return true;
     }
+    return false;
   }
   
   /**
-   * Add event listeners in capture phase to intercept before site handlers
+   * Only fix elements that have user-select: none
    */
-  function addUnblockers() {
-    // These events are commonly blocked by sites
-    const eventsToUnblock = ['copy', 'cut', 'paste', 'selectstart'];
+  function fixUserSelect(element) {
+    if (!element?.style) return;
+    if (isInsideCodeEditor(element)) return;
     
-    eventsToUnblock.forEach(eventType => {
-      document.addEventListener(eventType, unblockHandler, true);
-    });
+    const tag = element.tagName?.toLowerCase();
+    if (['script', 'style', 'iframe', 'svg', 'path', 'canvas', 'input', 'textarea', 'button', 'select'].includes(tag)) return;
     
-    // Context menu (right-click)
-    document.addEventListener('contextmenu', contextMenuHandler, true);
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', keyboardHandler, true);
+    try {
+      const computed = window.getComputedStyle(element);
+      const userSelect = computed.userSelect || computed.webkitUserSelect;
+      
+      if (userSelect === 'none') {
+        element.style.setProperty('user-select', 'text', 'important');
+        element.style.setProperty('-webkit-user-select', 'text', 'important');
+      }
+    } catch (e) {}
   }
   
   /**
-   * Remove event listeners
+   * Remove ONLY inline handlers that block copy (oncopy="return false" etc)
    */
-  function removeUnblockers() {
-    const eventsToUnblock = ['copy', 'cut', 'paste', 'selectstart'];
+  function removeInlineBlockers(element) {
+    if (!element?.hasAttribute) return;
+    if (isInsideCodeEditor(element)) return;
     
-    eventsToUnblock.forEach(eventType => {
-      document.removeEventListener(eventType, unblockHandler, true);
-    });
-    
-    document.removeEventListener('contextmenu', contextMenuHandler, true);
-    document.removeEventListener('keydown', keyboardHandler, true);
-  }
-  
-  /**
-   * Remove inline event handlers that block copying
-   */
-  function cleanInlineHandlers(element) {
-    if (!element?.removeAttribute) return;
-    
-    const blockingHandlers = [
-      'oncontextmenu', 
-      'onselectstart', 
-      'oncopy', 
-      'oncut',
-      'onpaste', 
-      'ondragstart'
-    ];
-    
-    blockingHandlers.forEach(handler => {
-      if (element.hasAttribute(handler)) {
-        // Store original for potential restoration
-        if (!removedHandlers.has(element)) {
-          removedHandlers.set(element, {});
+    ['oncopy', 'oncut', 'onpaste', 'onselectstart', 'oncontextmenu'].forEach(attr => {
+      if (element.hasAttribute(attr)) {
+        const value = element.getAttribute(attr);
+        // Only remove if it's blocking (returns false or prevents default)
+        if (value && (value.includes('false') || value.includes('preventDefault'))) {
+          element.removeAttribute(attr);
         }
-        removedHandlers.get(element)[handler] = element.getAttribute(handler);
-        element.removeAttribute(handler);
       }
     });
   }
   
   /**
-   * Restore inline handlers (for when disabling)
-   */
-  function restoreInlineHandlers(element) {
-    if (!element || !removedHandlers.has(element)) return;
-    
-    const handlers = removedHandlers.get(element);
-    Object.entries(handlers).forEach(([attr, value]) => {
-      if (value !== null) {
-        element.setAttribute(attr, value);
-      }
-    });
-    removedHandlers.delete(element);
-  }
-  
-  /**
-   * Process all elements in document
+   * Process document - only fix actual blockers
    */
   function processDocument() {
     if (!document.body) return;
     
-    // Clean document-level handlers
-    cleanInlineHandlers(document.documentElement);
-    cleanInlineHandlers(document.body);
-    
-    // Clean all elements
-    document.querySelectorAll('*').forEach(cleanInlineHandlers);
+    document.querySelectorAll('*').forEach(el => {
+      fixUserSelect(el);
+      removeInlineBlockers(el);
+    });
   }
   
   /**
-   * Set up MutationObserver for dynamic content
+   * Mutation observer for dynamic content
    */
   function setupObserver() {
-    if (observer) {
-      observer.disconnect();
-    }
+    if (observer) observer.disconnect();
     
     observer = new MutationObserver(mutations => {
       if (!isEnabled) return;
       
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            cleanInlineHandlers(node);
-            if (node.querySelectorAll) {
-              node.querySelectorAll('*').forEach(cleanInlineHandlers);
-            }
+            fixUserSelect(node);
+            removeInlineBlockers(node);
+            node.querySelectorAll?.('*').forEach(el => {
+              fixUserSelect(el);
+              removeInlineBlockers(el);
+            });
           }
-        }
-      }
+        });
+      });
     });
     
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
   }
   
-  /**
-   * Enable copy unlocking
-   */
   function enable() {
     if (isEnabled) return;
     isEnabled = true;
     
-    // Add CSS class for unlock styles (enables text selection via CSS)
     document.documentElement.classList.add('cu-unlock-active');
-    
-    // Add event unblockers
-    addUnblockers();
-    
-    // Process existing elements (remove inline handlers)
     processDocument();
-    
-    // Watch for dynamic content
     setupObserver();
     
-    console.log('CopyUnbound: Enabled for', window.location.hostname);
+    console.log('CopyUnbound: Enabled (minimal mode)');
   }
   
-  /**
-   * Disable copy unlocking
-   */
   function disable() {
     if (!isEnabled) return;
     isEnabled = false;
     
-    // Remove CSS class
     document.documentElement.classList.remove('cu-unlock-active');
-    
-    // Remove event unblockers
-    removeUnblockers();
-    
-    // Stop observer
     if (observer) {
       observer.disconnect();
       observer = null;
     }
     
-    console.log('CopyUnbound: Disabled for', window.location.hostname);
+    console.log('CopyUnbound: Disabled');
   }
   
-  /**
-   * Handle messages from background
-   */
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'CU_STATE_CHANGE') {
-      if (message.enabled) {
-        enable();
-      } else {
-        disable();
-      }
+      message.enabled ? enable() : disable();
       sendResponse({ success: true });
     }
     return true;
   });
   
-  /**
-   * Initialize content script
-   */
   function initialize() {
     chrome.runtime.sendMessage({ type: 'CU_CONTENT_READY' }, response => {
-      if (chrome.runtime.lastError) {
-        console.debug('CopyUnbound: Could not get initial state');
-        return;
-      }
-      
-      if (response?.enabled) {
-        enable();
-      }
+      if (chrome.runtime.lastError) return;
+      if (response?.enabled) enable();
     });
   }
   
-  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
     initialize();
-  }
-  
-  // Handle late-loading body
-  if (!document.body) {
-    const bodyObserver = new MutationObserver(() => {
-      if (document.body && isEnabled) {
-        processDocument();
-        bodyObserver.disconnect();
-      }
-    });
-    bodyObserver.observe(document.documentElement, { childList: true });
   }
 })();

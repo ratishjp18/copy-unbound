@@ -423,6 +423,220 @@ async function handleMessage(message, sender) {
         }
       }
       
+      case 'CU_COPY_TABLE': {
+        // Extract and copy table data
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        
+        if (!tabs.length) {
+          return { success: false, error: 'No active tab' };
+        }
+        
+        try {
+          const results = await chrome.scripting.executeScript({
+            target: { tabId: tabs[0].id },
+            func: () => {
+              // Find all tables and grid-like structures
+              const tables = [];
+              
+              // Standard HTML tables
+              document.querySelectorAll('table').forEach(table => {
+                const rows = [];
+                
+                // Get headers from thead or first row with th
+                const headerCells = [];
+                table.querySelectorAll('thead th, thead td, tr:first-child th').forEach(cell => {
+                  // Get text from spans or direct text
+                  const spans = cell.querySelectorAll('span');
+                  if (spans.length > 0) {
+                    spans.forEach(span => {
+                      const text = span.innerText.trim();
+                      if (text && !headerCells.includes(text)) {
+                        headerCells.push(text);
+                      }
+                    });
+                  } else {
+                    const text = cell.innerText.trim();
+                    if (text) {
+                      headerCells.push(text);
+                    }
+                  }
+                });
+                if (headerCells.length > 0) {
+                  rows.push(headerCells);
+                }
+                
+                // Get body rows
+                table.querySelectorAll('tbody tr, tr').forEach(tr => {
+                  // Skip header rows
+                  if (tr.querySelector('th') && tr.closest('thead')) return;
+                  if (tr === table.querySelector('tr:first-child') && headerCells.length > 0) return;
+                  
+                  const cells = [];
+                  tr.querySelectorAll('td, th').forEach(cell => {
+                    // Get text from nested elements
+                    let text = '';
+                    const spans = cell.querySelectorAll('span, div, p');
+                    if (spans.length > 0) {
+                      const texts = [];
+                      spans.forEach(el => {
+                        const t = el.innerText.trim();
+                        if (t && !texts.includes(t)) texts.push(t);
+                      });
+                      text = texts.join(' ');
+                    } else {
+                      text = cell.innerText.trim();
+                    }
+                    cells.push(text);
+                  });
+                  if (cells.length > 0 && cells.some(c => c)) {
+                    rows.push(cells);
+                  }
+                });
+                
+                if (rows.length > 0) {
+                  tables.push(rows);
+                }
+              });
+              
+              // ARIA grid tables
+              document.querySelectorAll('[role="grid"], [role="table"]').forEach(grid => {
+                if (grid.tagName === 'TABLE') return; // Already processed
+                
+                const rows = [];
+                
+                // Get headers
+                const headerRow = [];
+                grid.querySelectorAll('[role="columnheader"], [role="rowheader"]').forEach(header => {
+                  headerRow.push(header.innerText.trim());
+                });
+                if (headerRow.length > 0) {
+                  rows.push(headerRow);
+                }
+                
+                // Get rows
+                grid.querySelectorAll('[role="row"]').forEach(row => {
+                  const cells = [];
+                  row.querySelectorAll('[role="cell"], [role="gridcell"]').forEach(cell => {
+                    cells.push(cell.innerText.trim());
+                  });
+                  if (cells.length > 0 && cells.join('') !== headerRow.join('')) {
+                    rows.push(cells);
+                  }
+                });
+                
+                if (rows.length > 0) {
+                  tables.push(rows);
+                }
+              });
+              
+              // Div-based grids (common in React/Angular apps)
+              document.querySelectorAll('[class*="grid"], [class*="Grid"], [class*="datagrid"], [class*="DataGrid"]').forEach(grid => {
+                // Skip if already processed
+                if (grid.tagName === 'TABLE') return;
+                if (grid.closest('table')) return;
+                
+                const rows = [];
+                
+                // Look for header row
+                const headerEl = grid.querySelector('[class*="header"], [class*="Header"], [class*="head"], [class*="Head"]');
+                if (headerEl) {
+                  const headerCells = [];
+                  headerEl.querySelectorAll('span, [class*="cell"], [class*="Cell"], [class*="column"], [class*="Column"]').forEach(cell => {
+                    const text = cell.innerText.trim();
+                    if (text && text.length < 100 && !headerCells.includes(text)) {
+                      headerCells.push(text);
+                    }
+                  });
+                  if (headerCells.length > 0) {
+                    rows.push(headerCells);
+                  }
+                }
+                
+                // Look for body rows
+                const bodyEl = grid.querySelector('[class*="body"], [class*="Body"], [class*="content"], [class*="Content"]') || grid;
+                bodyEl.querySelectorAll('[class*="row"], [class*="Row"]').forEach(row => {
+                  // Skip header rows
+                  if (row.className && (row.className.includes('header') || row.className.includes('Header'))) return;
+                  
+                  const cells = [];
+                  row.querySelectorAll('[class*="cell"], [class*="Cell"], span').forEach(cell => {
+                    const text = cell.innerText.trim();
+                    if (text && text.length < 500) {
+                      cells.push(text);
+                    }
+                  });
+                  if (cells.length > 0) {
+                    rows.push(cells);
+                  }
+                });
+                
+                if (rows.length > 1) {
+                  tables.push(rows);
+                }
+              });
+              
+              if (tables.length === 0) {
+                return { success: false, error: 'No tables found on this page' };
+              }
+              
+              // Convert to TSV (tab-separated values)
+              let output = '';
+              tables.forEach((table, idx) => {
+                if (idx > 0) output += '\n\n';
+                table.forEach(row => {
+                  output += row.join('\t') + '\n';
+                });
+              });
+              
+              // Copy to clipboard using multiple methods
+              let copied = false;
+              
+              // Method 1: Clipboard API
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                  navigator.clipboard.writeText(output);
+                  copied = true;
+                } catch (e) {}
+              }
+              
+              // Method 2: execCommand fallback
+              if (!copied) {
+                const textarea = document.createElement('textarea');
+                textarea.value = output;
+                textarea.style.cssText = 'position:fixed;left:-9999px;top:0;';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                  copied = document.execCommand('copy');
+                } catch (e) {}
+                document.body.removeChild(textarea);
+              }
+              
+              // Show success message
+              const totalRows = tables.reduce((sum, t) => sum + t.length, 0);
+              const msg = document.createElement('div');
+              msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#27ae60;color:white;padding:14px 28px;border-radius:8px;font-family:system-ui;font-size:15px;font-weight:500;z-index:2147483647;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+              msg.textContent = copied 
+                ? '✓ Table copied! (' + totalRows + ' rows)' 
+                : '✗ Copy failed';
+              document.body.appendChild(msg);
+              setTimeout(() => msg.remove(), 3000);
+              
+              return { success: copied, rows: totalRows, tables: tables.length };
+            }
+          });
+          
+          if (results && results[0] && results[0].result) {
+            return results[0].result;
+          }
+          
+          return { success: false, error: 'Script execution failed' };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      }
+      
       default:
         return { error: 'Unknown message type' };
     }
