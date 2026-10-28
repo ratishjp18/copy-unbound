@@ -1,88 +1,35 @@
 /**
  * CopyUnbound - Unlock CSS
  * Applied when extension is enabled (via .cu-unlock-active class)
+ * 
+ * MINIMAL: Only override user-select:none, don't touch anything else
  */
 
-/* Restore text selection */
-html.cu-unlock-active,
-html.cu-unlock-active *,
-html.cu-unlock-active *::before,
-html.cu-unlock-active *::after {
+/* 
+ * We DON'T use blanket rules like "* { user-select: text !important }" 
+ * because that breaks React and other frameworks.
+ * 
+ * Instead, the JavaScript will add inline styles only to elements 
+ * that actually have user-select: none.
+ * 
+ * This CSS file only provides fallback rules for common patterns.
+ */
+
+/* Target common "no-select" utility classes from CSS frameworks */
+html.cu-unlock-active .select-none,
+html.cu-unlock-active .noselect,
+html.cu-unlock-active .no-select,
+html.cu-unlock-active .unselectable,
+html.cu-unlock-active [unselectable="on"] {
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
-  -ms-user-select: text !important;
   user-select: text !important;
-  -webkit-touch-callout: default !important;
 }
 
-/* Preserve form element behavior */
-html.cu-unlock-active input,
-html.cu-unlock-active textarea,
-html.cu-unlock-active select,
-html.cu-unlock-active button,
-html.cu-unlock-active [contenteditable="true"],
-html.cu-unlock-active [contenteditable=""] {
-  -webkit-user-select: auto !important;
-  -moz-user-select: auto !important;
-  -ms-user-select: auto !important;
-  user-select: auto !important;
-}
-
-/* Restore cursor for text elements */
-html.cu-unlock-active {
-  cursor: auto !important;
-}
-
-html.cu-unlock-active p,
-html.cu-unlock-active span,
-html.cu-unlock-active div,
-html.cu-unlock-active h1, 
-html.cu-unlock-active h2, 
-html.cu-unlock-active h3,
-html.cu-unlock-active h4, 
-html.cu-unlock-active h5, 
-html.cu-unlock-active h6,
-html.cu-unlock-active li,
-html.cu-unlock-active td, 
-html.cu-unlock-active th,
-html.cu-unlock-active article,
-html.cu-unlock-active section,
-html.cu-unlock-active main,
-html.cu-unlock-active aside,
-html.cu-unlock-active blockquote,
-html.cu-unlock-active pre,
-html.cu-unlock-active code,
-html.cu-unlock-active label,
-html.cu-unlock-active a {
-  cursor: text !important;
-}
-
-/* Keep pointer for interactive elements */
-html.cu-unlock-active a:hover,
-html.cu-unlock-active button,
-html.cu-unlock-active [role="button"],
-html.cu-unlock-active input[type="submit"],
-html.cu-unlock-active input[type="button"],
-html.cu-unlock-active input[type="reset"],
-html.cu-unlock-active select {
-  cursor: pointer !important;
-}
-
-/* Keep text cursor for inputs */
-html.cu-unlock-active input[type="text"],
-html.cu-unlock-active input[type="email"],
-html.cu-unlock-active input[type="password"],
-html.cu-unlock-active input[type="search"],
-html.cu-unlock-active input[type="url"],
-html.cu-unlock-active input[type="tel"],
-html.cu-unlock-active input[type="number"],
-html.cu-unlock-active textarea,
-html.cu-unlock-active [contenteditable="true"],
-html.cu-unlock-active [contenteditable=""] {
-  cursor: text !important;
-}
-
-/* Restore pointer events */
-html.cu-unlock-active *:not(iframe):not(video):not(audio):not(canvas):not(object):not(embed) {
-  pointer-events: auto !important;
+/* Target elements with inline style user-select:none */
+html.cu-unlock-active [style*="user-select: none"],
+html.cu-unlock-active [style*="user-select:none"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
 }
