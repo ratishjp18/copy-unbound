@@ -1,18 +1,6 @@
 /**
  * CopyUnbound - Unlock CSS
  * Applied when extension is enabled (via .cu-unlock-active class)
- * 
- * MINIMAL: Only override user-select:none, don't touch anything else
- */
-
-/* 
- * We DON'T use blanket rules like "* { user-select: text !important }" 
- * because that breaks React and other frameworks.
- * 
- * Instead, the JavaScript will add inline styles only to elements 
- * that actually have user-select: none.
- * 
- * This CSS file only provides fallback rules for common patterns.
  */
 
 /* Target common "no-select" utility classes from CSS frameworks */
@@ -29,6 +17,65 @@ html.cu-unlock-active [unselectable="on"] {
 /* Target elements with inline style user-select:none */
 html.cu-unlock-active [style*="user-select: none"],
 html.cu-unlock-active [style*="user-select:none"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Target table headers specifically - they often have user-select: none */
+html.cu-unlock-active th,
+html.cu-unlock-active thead,
+html.cu-unlock-active thead tr,
+html.cu-unlock-active thead th,
+html.cu-unlock-active thead td,
+html.cu-unlock-active [role="columnheader"],
+html.cu-unlock-active [role="rowheader"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Target spans inside table headers */
+html.cu-unlock-active th span,
+html.cu-unlock-active th div,
+html.cu-unlock-active thead span,
+html.cu-unlock-active thead div,
+html.cu-unlock-active [role="columnheader"] span,
+html.cu-unlock-active [role="columnheader"] div {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Target data grid headers (AG Grid, MUI DataGrid, etc.) */
+html.cu-unlock-active .ag-header-cell,
+html.cu-unlock-active .ag-header-cell-text,
+html.cu-unlock-active .MuiDataGrid-columnHeader,
+html.cu-unlock-active .MuiDataGrid-columnHeaderTitle,
+html.cu-unlock-active [class*="header-cell"],
+html.cu-unlock-active [class*="HeaderCell"],
+html.cu-unlock-active [class*="column-header"],
+html.cu-unlock-active [class*="columnHeader"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Tailwind specific - override any select-none even on th elements */
+html.cu-unlock-active th.select-none,
+html.cu-unlock-active th[class*="select-none"],
+html.cu-unlock-active [role="columnheader"].select-none,
+html.cu-unlock-active [role="columnheader"][class*="select-none"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Force all th elements with any Tailwind text classes */
+html.cu-unlock-active th[class*="text-"],
+html.cu-unlock-active th[class*="font-"],
+html.cu-unlock-active [role="columnheader"][class*="text-"],
+html.cu-unlock-active [role="columnheader"][class*="font-"] {
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   user-select: text !important;
