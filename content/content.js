@@ -47,6 +47,31 @@
   }
   
   /**
+   * Fix table headers specifically
+   */
+  function fixTableHeaders() {
+    // Target all table headers and their children
+    const selectors = [
+      'th', 'thead', 'thead th', 'thead td',
+      '[role="columnheader"]', '[role="rowheader"]',
+      'th span', 'th div', 'thead span', 'thead div',
+      '.ag-header-cell', '.MuiDataGrid-columnHeader',
+      '[class*="header-cell"]', '[class*="HeaderCell"]'
+    ];
+    
+    selectors.forEach(selector => {
+      try {
+        document.querySelectorAll(selector).forEach(el => {
+          if (!isInsideCodeEditor(el)) {
+            el.style.setProperty('user-select', 'text', 'important');
+            el.style.setProperty('-webkit-user-select', 'text', 'important');
+          }
+        });
+      } catch (e) {}
+    });
+  }
+  
+  /**
    * Remove ONLY inline handlers that block copy (oncopy="return false" etc)
    */
   function removeInlineBlockers(element) {
@@ -85,9 +110,11 @@
     observer = new MutationObserver(mutations => {
       if (!isEnabled) return;
       
+      let hasNewContent = false;
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === Node.ELEMENT_NODE) {
+            hasNewContent = true;
             fixUserSelect(node);
             removeInlineBlockers(node);
             node.querySelectorAll?.('*').forEach(el => {
@@ -97,6 +124,11 @@
           }
         });
       });
+      
+      // Re-check table headers if new content was added
+      if (hasNewContent) {
+        fixTableHeaders();
+      }
     });
     
     observer.observe(document.documentElement, { childList: true, subtree: true });
@@ -108,6 +140,7 @@
     
     document.documentElement.classList.add('cu-unlock-active');
     processDocument();
+    fixTableHeaders();
     setupObserver();
     
     console.log('CopyUnbound: Enabled (minimal mode)');

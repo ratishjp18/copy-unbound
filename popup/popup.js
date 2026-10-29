@@ -12,14 +12,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusTextEl = document.getElementById('status-text');
   const featuresEl = document.getElementById('features');
   const actionsEl = document.getElementById('actions');
-  const toolsSectionEl = document.getElementById('tools-section');
   const copyTextBtn = document.getElementById('copy-text-btn');
   const textModal = document.getElementById('text-modal');
   const textPreview = document.getElementById('text-preview');
   const charCount = document.getElementById('char-count');
   const modalClose = document.getElementById('modal-close');
   const copyConfirmBtn = document.getElementById('copy-confirm-btn');
-  const ocrBtn = document.getElementById('ocr-btn');
   
   let currentHostname = null;
   let isRestricted = false;
@@ -33,13 +31,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (restricted) {
       restrictedEl.classList.add('show');
       toggleSectionEl.classList.add('hidden');
-      toolsSectionEl.classList.add('hidden');
       return;
     }
     
     restrictedEl.classList.remove('show');
     toggleSectionEl.classList.remove('hidden');
-    toolsSectionEl.classList.remove('hidden');
     
     toggleEl.checked = enabled;
     
@@ -172,174 +168,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Could not copy to clipboard: ' + e.message);
     }
   });
-  
-  // Copy Password button handler
-  const copyPasswordBtn = document.getElementById('copy-password-btn');
-  
-  copyPasswordBtn.addEventListener('click', async () => {
-    copyPasswordBtn.disabled = true;
-    copyPasswordBtn.innerHTML = `
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-      Copying...
-    `;
-    
-    try {
-      const result = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ type: 'CU_START_PASSWORD_COPY' }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      
-      if (result && result.success) {
-        copyPasswordBtn.innerHTML = `
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Copied! (${result.length} chars)
-        `;
-        copyPasswordBtn.style.background = '#27ae60';
-        copyPasswordBtn.style.color = 'white';
-        
-        setTimeout(() => {
-          window.close();
-        }, 1500);
-      } else {
-        alert(result?.error || 'Could not copy password. Make sure the password field has a value.');
-        resetPasswordButton();
-      }
-    } catch (e) {
-      alert('Error: ' + e.message);
-      resetPasswordButton();
-    }
-  });
-  
-  function resetPasswordButton() {
-    copyPasswordBtn.disabled = false;
-    copyPasswordBtn.innerHTML = `
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-      Copy Password from Field
-    `;
-  }
-
-  // Copy Table button handler
-  const copyTableBtn = document.getElementById('copy-table-btn');
-  
-  copyTableBtn.addEventListener('click', async () => {
-    copyTableBtn.disabled = true;
-    copyTableBtn.innerHTML = `
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <line x1="3" y1="9" x2="21" y2="9"/>
-        <line x1="3" y1="15" x2="21" y2="15"/>
-        <line x1="9" y1="3" x2="9" y2="21"/>
-        <line x1="15" y1="3" x2="15" y2="21"/>
-      </svg>
-      Extracting...
-    `;
-    
-    try {
-      const result = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ type: 'CU_COPY_TABLE' }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      
-      if (result && result.success) {
-        copyTableBtn.innerHTML = `
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          Copied! (${result.rows} rows)
-        `;
-        copyTableBtn.style.background = '#27ae60';
-        copyTableBtn.style.color = 'white';
-        
-        setTimeout(() => {
-          resetTableButton();
-        }, 2000);
-      } else {
-        alert(result?.error || 'No table data found on this page.');
-        resetTableButton();
-      }
-    } catch (e) {
-      alert('Error: ' + e.message);
-      resetTableButton();
-    }
-  });
-  
-  function resetTableButton() {
-    copyTableBtn.disabled = false;
-    copyTableBtn.style.background = '';
-    copyTableBtn.style.color = '';
-    copyTableBtn.innerHTML = `
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <line x1="3" y1="9" x2="21" y2="9"/>
-        <line x1="3" y1="15" x2="21" y2="15"/>
-        <line x1="9" y1="3" x2="9" y2="21"/>
-        <line x1="15" y1="3" x2="15" y2="21"/>
-      </svg>
-      Copy Table Data
-    `;
-  }
-
-  // OCR button handler
-  ocrBtn.addEventListener('click', async () => {
-    ocrBtn.disabled = true;
-    ocrBtn.innerHTML = `
-      <svg class="btn-icon spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"/>
-      </svg>
-      Starting capture...
-    `;
-    
-    try {
-      const result = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ type: 'CU_START_OCR_CAPTURE' }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      
-      if (result && result.success) {
-        // Close popup - capture will happen on page
-        window.close();
-      } else {
-        alert(result?.error || 'Could not start OCR capture. Try reloading the page.');
-        resetOcrButton();
-      }
-    } catch (e) {
-      alert('Error: ' + e.message);
-      resetOcrButton();
-    }
-  });
-  
-  function resetOcrButton() {
-    ocrBtn.disabled = false;
-    ocrBtn.innerHTML = `
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <polyline points="21 15 16 10 5 21"/>
-      </svg>
-      Extract Text from Image (OCR)
-    `;
-  }
 });
